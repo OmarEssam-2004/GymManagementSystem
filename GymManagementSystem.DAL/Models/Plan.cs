@@ -9,5 +9,6 @@ namespace GymManagementSystem.Models
         public decimal Price { get; set; }
         public int DurationDays { get; set; }     
         public bool IsActive { get; set; }
+        public ICollection<MemberShip> Members { get; set; }
     }
 }
