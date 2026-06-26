@@ -1,8 +1,6 @@
 ﻿using GymManagementSystem.DAL.Models;
 using GymManagementSystem.DAL.Repositories.Interfaces;
 using GymManagementSystem.DbContexts;
-using GymManagementSystem.Models;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,14 +9,10 @@ using System.Threading.Tasks;
 
 namespace GymManagementSystem.DAL.Repositories.Classes
 {
-    public class MemberRepository : GenericRepository<Member>, IMemberRepository
+    public class TrainerRepository : GenericRepository<Trainer>, ITrainerRepository
     {
-        public MemberRepository(GymDbContext context) : base(context)
+        public TrainerRepository(GymDbContext context) : base(context)
         {
-
         }
-
-       
-
     }
 }

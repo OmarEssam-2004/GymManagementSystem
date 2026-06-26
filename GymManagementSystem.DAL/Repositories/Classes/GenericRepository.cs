@@ -2,12 +2,8 @@
 using GymManagementSystem.DAL.Repositories.Interfaces;
 using GymManagementSystem.DbContexts;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
+
 
 
 namespace GymManagementSystem.DAL.Repositories.Classes
@@ -48,6 +44,12 @@ namespace GymManagementSystem.DAL.Repositories.Classes
         public async Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken ct = default)
         {
             return await _context.Set<TEntity>().AnyAsync(predicate, ct);
+        }
+
+        public async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken ct = default)
+        {
+            return await _context.Set<TEntity>().FirstOrDefaultAsync(predicate, ct);
+
         }
     }
 }

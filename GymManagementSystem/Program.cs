@@ -1,5 +1,6 @@
 
 using GymManagement.BLL.Services.Classes;
+//using GymManagementSystem.BLL.Services.Classes;
 using GymManagementSystem.BLL.Services.Interfaces;
 using GymManagementSystem.DAL.Repositories.Classes;
 using GymManagementSystem.DAL.Repositories.Interfaces;
@@ -26,6 +27,12 @@ namespace GymManagementSystem
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             }); // Allow DI For GymDbContext With Options
+
+            builder.Services.AddScoped<IPlanService, PlanService>();
+
+            builder.Services.AddScoped<ITrainerService, TrainerService>();
+
+
 
 
 
@@ -73,80 +80,6 @@ namespace GymManagementSystem
 
 
 
-
-
-
-//--------------------------------------------------------------------------------------------------------
-
-//using GymManagementSystem.BLL.Services.Classes;
-//using GymManagementSystem.BLL.Services.Interfaces;
-//using GymManagementSystem.DAL.Repositories.Classes;
-//using GymManagementSystem.DAL.Repositories.Interfaces;
-//using GymManagementSystem.DbContexts;
-//using Microsoft.EntityFrameworkCore;
-
-//namespace GymManagementSystem
-//{
-//    public class Program
-//    {
-//        public static void Main(string[] args)
-//        {
-//            var builder = WebApplication.CreateBuilder(args);
-
-//            // Add services to the container.
-//            builder.Services.AddControllersWithViews();
-
-//            builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-//            builder.Services.AddScoped<IMemberService, MemberService>();
-
-
-
-//            builder.Services.AddDbContext<GymDbContext>(options =>
-//            {
-//                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-//            });
-
-
-
-
-
-
-
-//            var app = builder.Build();
-
-
-
-
-
-
-
-
-
-
-
-//            // Configure the HTTP request pipeline.
-//            if (!app.Environment.IsDevelopment())
-//            {
-//                app.UseExceptionHandler("/Home/Error");
-//                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-//                app.UseHsts();
-//            }
-
-//            app.UseHttpsRedirection();
-//            app.UseRouting();
-
-//            app.UseAuthorization();
-
-//            app.MapStaticAssets();
-//            app.MapControllerRoute(
-//                name: "default",
-//                pattern: "{controller=Home}/{action=Index}/{id?}")
-//                .WithStaticAssets();
-
-//            app.Run();
-//        }
-//    }
-//}
 
 
 
