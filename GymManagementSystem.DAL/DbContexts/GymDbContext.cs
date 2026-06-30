@@ -1,4 +1,5 @@
 ﻿using GymManagementSystem.DAL.Models;
+using GymManagementSystem.DAL.Repositories.Interfaces;
 using GymManagementSystem.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
@@ -17,6 +18,11 @@ namespace GymManagementSystem.DbContexts
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
             base.OnModelCreating(modelBuilder);
         }
+
+        //internal IGenericRepository<BaseEntity> SaveChangesAsync(object ct)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         public DbSet<Plan> Plans { get; set; }
         public DbSet<Booking> Bookings { get; set; }

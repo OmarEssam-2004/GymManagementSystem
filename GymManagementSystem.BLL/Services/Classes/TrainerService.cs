@@ -1,10 +1,12 @@
-﻿using GymManagementSystem.BLL.Services.Interfaces;
+﻿
+using AutoMapper;
+using GymManagementSystem.BLL.Services.Interfaces;
 using GymManagementSystem.BLL.ViewModels.Trainers;
+using GymManagementSystem.DAL;
 using GymManagementSystem.DAL.Models;
 using GymManagementSystem.DAL.Repositories.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,110 +14,61 @@ namespace GymManagement.BLL.Services.Classes
 {
     public class TrainerService : ITrainerService
     {
-        private readonly IGenericRepository<Trainer> _trainerRepository;
-        private readonly IGenericRepository<Session> _sessionRepository;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
 
-        public TrainerService(
-            IGenericRepository<Trainer> trainerRepository,
-            IGenericRepository<Session> sessionRepository)
+        public TrainerService(IUnitOfWork unitOfWork, IMapper mapper)
         {
-            _trainerRepository = trainerRepository;
-            _sessionRepository = sessionRepository;
+            _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<TrainerViewModel>> GetAllTrainersAsync(CancellationToken ct)
         {
-            var trainers = await _trainerRepository.GetAllAsync(ct: ct);
-
-            var trainersViewModel = trainers.Select(trainer => new TrainerViewModel()
-            {
-                Id = trainer.Id,
-                Name = trainer.Name,
-                Phone = trainer.Phone,
-                Email = trainer.Email,
-                Gender = trainer.Gender.ToString(),
-                DateOfBirth = trainer.DateOfBirth.ToString(),
-                Address = $"{trainer.Address.BuildingNumber} - {trainer.Address.Street} - {trainer.Address.City}",
-                Specialty = trainer.Specialty
-            });
-
+            var trainers = await _unitOfWork.GetRepository<Trainer>().GetAllAsync(ct: ct);
+            var trainersViewModel = _mapper.Map<IEnumerable<TrainerViewModel>>(trainers);
             return trainersViewModel;
         }
 
         public async Task<TrainerViewModel?> GetTrainerDetailsAsync(int trainerId, CancellationToken ct)
         {
-            var trainer = await _trainerRepository.GetByIdAsync(trainerId, ct);
+            var trainer = await _unitOfWork.GetRepository<Trainer>().GetByIdAsync(trainerId, ct);
             if (trainer is null) return null;
 
-            var model = new TrainerViewModel()
-            {
-                Id = trainer.Id,
-                Name = trainer.Name,
-                Email = trainer.Email,
-                Phone = trainer.Phone,
-                Gender = trainer.Gender.ToString(),
-                DateOfBirth = trainer.DateOfBirth.ToString(),
-                Address = $"{trainer.Address.BuildingNumber} - {trainer.Address.Street} - {trainer.Address.City}",
-                Specialty = trainer.Specialty
-            };
-
+            var model = _mapper.Map<TrainerViewModel>(trainer);
             return model;
         }
 
         public async Task<bool> CreateTrainerAsync(TrainerToAddViewModel model, CancellationToken ct)
         {
-            var emailExists = await _trainerRepository.AnyAsync(T => T.Email == model.Email, ct);
-            var phoneExists = await _trainerRepository.AnyAsync(T => T.Phone == model.Phone, ct);
+            var emailExists = await _unitOfWork.GetRepository<Trainer>().AnyAsync(T => T.Email == model.Email, ct);
+            var phoneExists = await _unitOfWork.GetRepository<Trainer>().AnyAsync(T => T.Phone == model.Phone, ct);
 
             if (emailExists || phoneExists) return false;
 
-            var trainer = new Trainer
-            {
-                Name = model.Name,
-                Email = model.Email,
-                Phone = model.Phone,
-                Gender = model.Gender,
-                DateOfBirth = model.DateOfBirth,
-                Specialty = model.Specialty,
-                Address = new Address
-                {
-                    BuildingNumber = model.BuildingNumber,
-                    City = model.City,
-                    Street = model.Street
-                }
-            };
+            var trainer = _mapper.Map<Trainer>(model);
 
-            var count = await _trainerRepository.AddAsync(trainer, ct);
+            _unitOfWork.GetRepository<Trainer>().Add(trainer);
+            var count = await _unitOfWork.SaveChangesAsync(ct);
             return count > 0;
         }
 
         public async Task<TrainerToUpdateViewModel?> GetTrainerToUpdateAsync(int trainerId, CancellationToken ct)
         {
-            var trainer = await _trainerRepository.GetByIdAsync(trainerId, ct);
+            var trainer = await _unitOfWork.GetRepository<Trainer>().GetByIdAsync(trainerId, ct);
             if (trainer is null) return null;
 
-            var model = new TrainerToUpdateViewModel()
-            {
-                Id = trainer.Id,
-                Name = trainer.Name,
-                Email = trainer.Email,
-                Phone = trainer.Phone,
-                City = trainer.Address.City,
-                BuildingNumber = trainer.Address.BuildingNumber,
-                Street = trainer.Address.Street,
-                Specialty = trainer.Specialty
-            };
-
+            var model = _mapper.Map<TrainerToUpdateViewModel>(trainer);
             return model;
         }
 
         public async Task<bool> UpdateTrainerAsync(int trainerId, TrainerToUpdateViewModel model, CancellationToken ct)
         {
-            var trainer = await _trainerRepository.GetByIdAsync(trainerId, ct);
+            var trainer = await _unitOfWork.GetRepository<Trainer>().GetByIdAsync(trainerId, ct);
             if (trainer is null) return false;
 
-            var emailExists = await _trainerRepository.AnyAsync(T => T.Email == model.Email && T.Id != trainerId, ct);
-            var phoneExists = await _trainerRepository.AnyAsync(T => T.Phone == model.Phone && T.Id != trainerId, ct);
+            var emailExists = await _unitOfWork.GetRepository<Trainer>().AnyAsync(T => T.Email == model.Email && T.Id != trainerId, ct);
+            var phoneExists = await _unitOfWork.GetRepository<Trainer>().AnyAsync(T => T.Phone == model.Phone && T.Id != trainerId, ct);
 
             if (emailExists || phoneExists) return false;
 
@@ -127,19 +80,21 @@ namespace GymManagement.BLL.Services.Classes
             trainer.Address.City = model.City;
             trainer.Address.Street = model.Street;
 
-            var count = await _trainerRepository.UpdateAsync(trainer, ct);
+            _unitOfWork.GetRepository<Trainer>().Update(trainer);
+            var count = await _unitOfWork.SaveChangesAsync(); // تم الحفاظ عليها بدون تمرير الـ ct بناءً على ملفك الأصلي
             return count > 0;
         }
 
         public async Task<bool> DeleteTrainerAsync(int trainerId, CancellationToken ct)
         {
-            var trainer = await _trainerRepository.GetByIdAsync(trainerId, ct);
+            var trainer = await _unitOfWork.GetRepository<Trainer>().GetByIdAsync(trainerId, ct);
             if (trainer is null) return false;
 
-            var hasFutureSessions = await _sessionRepository.AnyAsync(S => S.TrainerId == trainerId && S.StartDate > DateTime.Now, ct);
+            var hasFutureSessions = await _unitOfWork.GetRepository<Session>().AnyAsync(S => S.TrainerId == trainerId && S.StartDate > DateTime.Now, ct);
             if (hasFutureSessions) return false;
 
-            var count = await _trainerRepository.DeleteAsync(trainer, ct);
+            _unitOfWork.GetRepository<Trainer>().Delete(trainer);
+            var count = await _unitOfWork.SaveChangesAsync();
             return count > 0;
         }
     }

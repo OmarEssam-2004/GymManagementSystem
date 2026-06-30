@@ -1,7 +1,11 @@
 
 using GymManagement.BLL.Services.Classes;
+using GymManagementSystem.BLL;
+using GymManagementSystem.BLL.Services.Classes;
+
 //using GymManagementSystem.BLL.Services.Classes;
 using GymManagementSystem.BLL.Services.Interfaces;
+using GymManagementSystem.DAL;
 using GymManagementSystem.DAL.Repositories.Classes;
 using GymManagementSystem.DAL.Repositories.Interfaces;
 using GymManagementSystem.DbContexts;
@@ -17,20 +21,25 @@ namespace GymManagementSystem
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
-            //builder.Services.AddScoped<IPlanRepository, PlanRepository>(); // Allow DI For PlanRepository // Scoped
-            builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>)); // Allow DI For GenericRepository With Open Generic Type
+
             builder.Services.AddScoped<IMemberService, MemberService>(); // Allow DI For MemberService
+            builder.Services.AddScoped<IPlanService, PlanService>();
+            builder.Services.AddScoped<ITrainerService, TrainerService>();
+            builder.Services.AddScoped<ISessionService, SessionService>();
+
+            builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>)); // Allow DI For GenericRepository With Open Generic Type
+            builder.Services.AddScoped<ISessionRepository, SessionRepository>(); // Allow DI For SessionRepository
+
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            builder.Services.AddAutoMapper(M => M.AddProfile(new MappingProfile()));
 
 
-            //builder.Services.AddScoped<GymDbContext>();
+
             builder.Services.AddDbContext<GymDbContext>(options =>
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             }); // Allow DI For GymDbContext With Options
 
-            builder.Services.AddScoped<IPlanService, PlanService>();
-
-            builder.Services.AddScoped<ITrainerService, TrainerService>();
 
 
 
