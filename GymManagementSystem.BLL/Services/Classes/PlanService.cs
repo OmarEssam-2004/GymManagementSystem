@@ -1,5 +1,6 @@
 ﻿
 using AutoMapper;
+using GymManagementSystem.BLL.Coomon;
 using GymManagementSystem.BLL.Services.Interfaces;
 using GymManagementSystem.BLL.ViewModels.Plans;
 using GymManagementSystem.DAL;
@@ -49,14 +50,14 @@ namespace GymManagement.BLL.Services.Classes
             return model;
         }
 
-        public async Task<bool> UpdatePlanAsync(int planId, PlanToUpdateViewModel model, CancellationToken ct)
+        public async Task<Result> UpdatePlanAsync(int planId, PlanToUpdateViewModel model, CancellationToken ct)
         {
             var plan = await _unitOfWork.GetRepository<Plan>().GetByIdAsync(planId, ct);
-            if (plan is null) return false;
-            if (plan.Name != model.Name) return false;
+            if (plan is null) return Result.NotFound("Plan Not Found");
+            if (plan.Name != model.Name) return Result.ValidationFailed("Plan Name Mismatch");
 
             var hasActiveMemberships = await _unitOfWork.GetRepository<MemberShip>().AnyAsync(m => m.PlanId == planId && m.EndDate > DateTime.Now, ct);
-            if (hasActiveMemberships) return false;
+            if (hasActiveMemberships) return Result.Conflict("Plan Cannot Be Updated");
 
             plan.DurationDays = model.DurationDays;
             plan.Price = model.Price;
@@ -64,24 +65,24 @@ namespace GymManagement.BLL.Services.Classes
 
             _unitOfWork.GetRepository<Plan>().Update(plan);
             var count = await _unitOfWork.SaveChangesAsync(ct);
-            return count > 0;
+            return count > 0 ? Result.Ok() : Result.Conflict("Failed to Update Plan");
         }
 
-        public async Task<bool> TogglePlanStatusAsync(int planId, CancellationToken ct)
+        public async Task<Result> TogglePlanStatusAsync(int planId, CancellationToken ct)
         {
             var plan = await _unitOfWork.GetRepository<Plan>().GetByIdAsync(planId, ct);
-            if (plan is null) return false;
+            if (plan is null) return Result.NotFound("Plan Not Found");
 
             if (plan.IsActive)
             {
                 var hasActiveMemberships = await _unitOfWork.GetRepository<MemberShip>().AnyAsync(m => m.PlanId == planId && m.EndDate > DateTime.Now, ct);
-                if (hasActiveMemberships) return false;
+                if (hasActiveMemberships) return Result.Conflict("Plan Cannot Be Deactivated");
             }
 
             plan.IsActive = !plan.IsActive;
             _unitOfWork.GetRepository<Plan>().Update(plan);
             var count = await _unitOfWork.SaveChangesAsync(ct);
-            return count > 0;
+            return count > 0 ? Result.Ok() : Result.Conflict("Failed to Toggle Plan Status");
         }
     }
 }

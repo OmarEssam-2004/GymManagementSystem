@@ -34,13 +34,13 @@ namespace GymManagementSystem.PL.Controllers
             {
                 var result = await _trainerService.CreateTrainerAsync(model, ct);
 
-                if (result)
+                if (result.Success)
                 {
                     TempData["SuccessMessage"] = "Trainer created successfully !";
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "Failed to create trainer !";
+                    TempData["ErrorMessage"] = result.error;
                 }
 
                 return RedirectToAction("Index");
@@ -81,13 +81,13 @@ namespace GymManagementSystem.PL.Controllers
             {
                 var result = await _trainerService.UpdateTrainerAsync(id, model, ct);
 
-                if (result)
+                if (result.Success)
                 {
                     TempData["SuccessMessage"] = "Trainer Update successfully !";
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "Failed to Update trainer !";
+                    TempData["ErrorMessage"] = result.error;
                 }
 
                 return RedirectToAction("Index");
@@ -112,13 +112,13 @@ namespace GymManagementSystem.PL.Controllers
         {
             var result = await _trainerService.DeleteTrainerAsync(id, ct);
 
-            if (result)
+            if (result.Success)
             {
                 TempData["SuccessMessage"] = "Trainer Deleted successfully !";
             }
             else
             {
-                TempData["ErrorMessage"] = "Failed to Delete trainer. Check if they have active future sessions!";
+                TempData["ErrorMessage"] = result.error;
             }
 
             return RedirectToAction("Index");

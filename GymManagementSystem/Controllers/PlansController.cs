@@ -51,13 +51,13 @@ namespace GymManagementSystem.Controllers
             if (!ModelState.IsValid) return View(model);
 
             var result = await _planService.UpdatePlanAsync(id, model, ct);
-            if (result)
+            if (result.Success)
             {
                 TempData["SuccessMessage"] = "Plan updated successfully!";
                 return RedirectToAction("Index");
             }
 
-            TempData["ErrorMessage"] = "Failed to update. Verify if active memberships exist.";
+            TempData["ErrorMessage"] = result.error;
             return RedirectToAction("Index");
         }
 
@@ -65,13 +65,13 @@ namespace GymManagementSystem.Controllers
         public async Task<IActionResult> ToggleStatus(int id, CancellationToken ct = default)
         {
             var result = await _planService.TogglePlanStatusAsync(id, ct);
-            if (result)
+            if (result.Success)
             {
                 TempData["SuccessMessage"] = "Plan Status Changed";
             }
             else
             {
-                TempData["ErrorMessage"] = "Cannot change status. Plan has active memberships.";
+                TempData["ErrorMessage"] = result.error;
             }
             return RedirectToAction("Index");
         }

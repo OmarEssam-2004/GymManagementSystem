@@ -6,16 +6,18 @@ using GymManagementSystem.BLL.Services.Classes;
 //using GymManagementSystem.BLL.Services.Classes;
 using GymManagementSystem.BLL.Services.Interfaces;
 using GymManagementSystem.DAL;
+using GymManagementSystem.DAL.DataSeeding;
 using GymManagementSystem.DAL.Repositories.Classes;
 using GymManagementSystem.DAL.Repositories.Interfaces;
 using GymManagementSystem.DbContexts;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace GymManagementSystem
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -33,7 +35,7 @@ namespace GymManagementSystem
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddAutoMapper(M => M.AddProfile(new MappingProfile()));
 
-
+            builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 
             builder.Services.AddDbContext<GymDbContext>(options =>
             {
@@ -48,6 +50,18 @@ namespace GymManagementSystem
             var app = builder.Build();
 
 
+            using var scop = app.Services.CreateScope();
+            var _context = scop.ServiceProvider.GetRequiredService<GymDbContext>();
+            var logger = scop.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+            var folderPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "Files");
+            var pendingMigrations = _context.Database.GetPendingMigrations();
+            if(pendingMigrations.Any())
+            {
+                await _context.Database.MigrateAsync();
+            }
+
+            await GymDataSeeding.SeedAsync(_context, folderPath, logger);
 
 
 

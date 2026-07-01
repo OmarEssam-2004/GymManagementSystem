@@ -1,5 +1,6 @@
 ﻿
 using AutoMapper;
+using GymManagementSystem.BLL.Coomon;
 using GymManagementSystem.BLL.Services.Interfaces;
 using GymManagementSystem.BLL.ViewModels.Members;
 using GymManagementSystem.DAL;
@@ -29,55 +30,32 @@ namespace GymManagement.BLL.Services.Classes
             throw new NotImplementedException();
         }
 
-        public async Task<bool> CreateMemberAsync(CreateMemberViewModel model, CancellationToken ct)
+        public async Task<Result> CreateMemberAsync(CreateMemberViewModel model, CancellationToken ct)
         {
 
             var emailExists = await _unitOfWork.GetRepository<Member>().AnyAsync(M => M.Email == model.Email, ct);
             var phoneExists = await _unitOfWork.GetRepository<Member>().AnyAsync(M => M.Phone == model.Phone, ct);
 
-            if (emailExists || phoneExists) return false;
-
-
-            //var member = new Member
-            //{
-            //    Name = model.Name,
-            //    Email = model.Email,
-            //    Phone = model.Phone,
-            //    Gender = model.Gender,
-            //    Address = new Address
-            //    {
-            //        BuildingNumber = model.BuildingNumber,
-            //        City = model.City,
-            //        Street = model.Street
-            //    },
-            //    HealthRecord = new HealthRecord
-            //    {
-            //        Height = model.HealthRecordViewModel.Height,
-            //        Weight = model.HealthRecordViewModel.Weight,
-            //        BloodType = model.HealthRecordViewModel.BloodType,
-            //        Note = model.HealthRecordViewModel.Note,
-            //    }
-
-            //};
+            if (emailExists || phoneExists) return Result.ValidationFailed("Email or Phone Already Exists");
 
            var member = _mapper.Map<Member>(model);
 
              _unitOfWork.GetRepository<Member>().Add(member);
             var count = await _unitOfWork.SaveChangesAsync(ct);
-            return count > 0;
+            return count > 0 ? Result.Ok() : Result.Conflict("Failed to Create Member");
         }
 
-        public async Task<bool> DeleteMemberAsync(int memberId, CancellationToken ct)
+        public async Task<Result> DeleteMemberAsync(int memberId, CancellationToken ct)
         {
             var member = await _unitOfWork.GetRepository<Member>().GetByIdAsync(memberId, ct);
-            if (member is null) return false;
+            if (member is null) return Result.NotFound("Member Not Found");
 
            var hasFutureSessions = await _unitOfWork.GetRepository<Booking>().AnyAsync(B => B.MemberId == memberId && B.Session.StartDate > DateTime.Now, ct);
-            if (hasFutureSessions) return false;
+            if (hasFutureSessions) return Result.Conflict("Member Cannot Be Deleted");
 
             _unitOfWork.GetRepository<Member>().Delete(member);
             var count = await _unitOfWork.SaveChangesAsync(ct);
-            return count > 0;
+            return count > 0 ? Result.Ok() : Result.Conflict("Failed to Delete Member");
         }
 
         public async Task<IEnumerable<MemberViewModel>> GetAllMembersAsync(CancellationToken ct)
@@ -98,16 +76,6 @@ namespace GymManagement.BLL.Services.Classes
           var member = await _unitOfWork.GetRepository<Member>().GetByIdAsync(memberId, ct);
             if(member is null) return null;
 
-            //var model = new MemberViewModel()
-            //{
-            //    Photo = member.Photo,
-            //    Name = member.Name,
-            //    Email = member.Email,
-            //    Phone = member.Phone,
-            //    Gender = member.Gender.ToString(),
-            //    DateOfBirth = member.DateOfBirth.ToString(),
-            //    Address = $"{member.Address.BuildingNumber} - {member.Address.Street} - {member.Address.City}"
-            //};
            var model = _mapper.Map<MemberViewModel>(member);
 
            var activeMembership = await _unitOfWork.GetRepository<MemberShip>().FirstOrDefaultAsync(M => M.MemberId == memberId && M.EndDate > DateTime.Now, ct);
@@ -128,13 +96,6 @@ namespace GymManagement.BLL.Services.Classes
 
             if(healthRecord is null) return null;
 
-            //var model = new HealthRecordViewModel()
-            //{
-            //    Height = healthRecord.Height,
-            //    Weight = healthRecord.Weight,
-            //    BloodType = healthRecord.BloodType,
-            //    Note = healthRecord.Note,
-            //};
            var model = _mapper.Map<HealthRecordViewModel>(healthRecord);
 
             return model;
@@ -145,33 +106,21 @@ namespace GymManagement.BLL.Services.Classes
         {
            var member = await _unitOfWork.GetRepository<Member>().GetByIdAsync(memberId, ct);
 
-            //if (member is null) return null;
-            //var model = new MemberToUpdateViewModel()
-            //{
-            //    Name = member.Name,
-            //    Photo = member.Photo,
-            //    Phone = member.Phone,
-            //    City = member.Address.City,
-            //    BuildingNumber = member.Address.BuildingNumber,
-            //    Email = member.Email,
-            //    Street = member.Address.Street,
-            //};
-
            var model = _mapper.Map<MemberToUpdateViewModel>(member);
 
             return model;
         }
 
-        public async Task<bool> UpdateMemberAsync(int memberId, MemberToUpdateViewModel model, CancellationToken ct)
+        public async Task<Result> UpdateMemberAsync(int memberId, MemberToUpdateViewModel model, CancellationToken ct)
         {
             var member = await _unitOfWork.GetRepository<Member>().GetByIdAsync(memberId, ct);
-            if (member is null) return false;
+            if (member is null) return Result.NotFound("Member Not Found");
 
 
             var emailExists = await _unitOfWork.GetRepository<Member>().AnyAsync(M => M.Email == model.Email && M.Id != memberId, ct);
             var phoneExists = await _unitOfWork.GetRepository<Member>().AnyAsync(M => M.Phone == model.Phone && M.Id != memberId, ct);
 
-            if (emailExists || phoneExists) return false;
+            if (emailExists || phoneExists) return Result.ValidationFailed("Email or Phone Already Exists");
 
             member.Email = model.Email;
             member.Phone = model.Phone;
@@ -181,7 +130,7 @@ namespace GymManagement.BLL.Services.Classes
 
             _unitOfWork.GetRepository<Member>().Update(member);
             var count = await _unitOfWork.SaveChangesAsync(ct);
-            return count > 0;
+            return count > 0 ? Result.Ok() : Result.Conflict("Failed to Update Member");
 
         }
 

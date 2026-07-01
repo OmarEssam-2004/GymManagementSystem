@@ -58,6 +58,7 @@ namespace GymManagementSystem.BLL
             CreateMap<Trainer, TrainerSelectViewModel>();
             CreateMap<Category, CategorySelectViewModel>();
             CreateMap<CreateSessionViewModel, Session>();
+            CreateMap<Session, UpdateSessionViewModel>();
 
 
 

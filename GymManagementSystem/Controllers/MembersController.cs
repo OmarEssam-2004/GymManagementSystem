@@ -2,7 +2,6 @@
 using GymManagementSystem.BLL.ViewModels.Members;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-//using static Microsoft.CodeAnalysis.CSharp.SyntaxTokenParser;
 
 
 namespace GymManagementSystem.PL.Controllers
@@ -37,13 +36,13 @@ namespace GymManagementSystem.PL.Controllers
             {
                 var result = await _memberService.CreateMemberAsync(model, ct);
 
-                if (result)
+                if (result.Success)
                 {
                     TempData["SuccessMessage"] = "Member created successfully !";
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "Failed to create member !";                                                                                                              
+                    TempData["ErrorMessage"] = result.error;                                                                                                              
                 }
 
                 return RedirectToAction("Index");
@@ -105,13 +104,13 @@ namespace GymManagementSystem.PL.Controllers
             {
                 var result = await _memberService.UpdateMemberAsync(id,model, ct);
 
-                if (result)
+                if (result.Success)
                 {
                     TempData["SuccessMessage"] = "Member Update successfully !";
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "Failed to Update member !";
+                    TempData["ErrorMessage"] = result.error;
                 }
 
                 return RedirectToAction("Index");
@@ -139,13 +138,13 @@ namespace GymManagementSystem.PL.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken ct)
         {
             var result = await _memberService.DeleteMemberAsync(id, ct);
-            if (result)
+            if (result.Success)
             {
                 TempData["SuccessMessage"] = "Member Deleted Successfully :)";
             }
             else
             {
-                TempData["ErrorMessage"] = "Failed To Delete Member :(";
+                TempData["ErrorMessage"] = result.error;
             }
             return RedirectToAction("Index");
         }

@@ -1,5 +1,5 @@
-﻿
-using AutoMapper;
+﻿using AutoMapper;
+using GymManagementSystem.BLL.Coomon;
 using GymManagementSystem.BLL.Services.Interfaces;
 using GymManagementSystem.BLL.ViewModels.Trainers;
 using GymManagementSystem.DAL;
@@ -39,18 +39,18 @@ namespace GymManagement.BLL.Services.Classes
             return model;
         }
 
-        public async Task<bool> CreateTrainerAsync(TrainerToAddViewModel model, CancellationToken ct)
+        public async Task<Result> CreateTrainerAsync(TrainerToAddViewModel model, CancellationToken ct)
         {
             var emailExists = await _unitOfWork.GetRepository<Trainer>().AnyAsync(T => T.Email == model.Email, ct);
             var phoneExists = await _unitOfWork.GetRepository<Trainer>().AnyAsync(T => T.Phone == model.Phone, ct);
 
-            if (emailExists || phoneExists) return false;
+            if (emailExists || phoneExists) return Result.ValidationFailed("Email or Phone Already Exists");
 
             var trainer = _mapper.Map<Trainer>(model);
 
             _unitOfWork.GetRepository<Trainer>().Add(trainer);
             var count = await _unitOfWork.SaveChangesAsync(ct);
-            return count > 0;
+            return count > 0 ? Result.Ok() : Result.Conflict("Failed to Create Trainer");
         }
 
         public async Task<TrainerToUpdateViewModel?> GetTrainerToUpdateAsync(int trainerId, CancellationToken ct)
@@ -62,15 +62,15 @@ namespace GymManagement.BLL.Services.Classes
             return model;
         }
 
-        public async Task<bool> UpdateTrainerAsync(int trainerId, TrainerToUpdateViewModel model, CancellationToken ct)
+        public async Task<Result> UpdateTrainerAsync(int trainerId, TrainerToUpdateViewModel model, CancellationToken ct)
         {
             var trainer = await _unitOfWork.GetRepository<Trainer>().GetByIdAsync(trainerId, ct);
-            if (trainer is null) return false;
+            if (trainer is null) return Result.NotFound("Trainer Not Found");
 
             var emailExists = await _unitOfWork.GetRepository<Trainer>().AnyAsync(T => T.Email == model.Email && T.Id != trainerId, ct);
             var phoneExists = await _unitOfWork.GetRepository<Trainer>().AnyAsync(T => T.Phone == model.Phone && T.Id != trainerId, ct);
 
-            if (emailExists || phoneExists) return false;
+            if (emailExists || phoneExists) return Result.ValidationFailed("Email or Phone Already Exists");
 
             trainer.Name = model.Name;
             trainer.Email = model.Email;
@@ -81,21 +81,23 @@ namespace GymManagement.BLL.Services.Classes
             trainer.Address.Street = model.Street;
 
             _unitOfWork.GetRepository<Trainer>().Update(trainer);
+
             var count = await _unitOfWork.SaveChangesAsync(); // تم الحفاظ عليها بدون تمرير الـ ct بناءً على ملفك الأصلي
-            return count > 0;
+            return count > 0 ? Result.Ok() : Result.Conflict("Failed to Update Trainer");
         }
 
-        public async Task<bool> DeleteTrainerAsync(int trainerId, CancellationToken ct)
+        public async Task<Result> DeleteTrainerAsync(int trainerId, CancellationToken ct)
         {
             var trainer = await _unitOfWork.GetRepository<Trainer>().GetByIdAsync(trainerId, ct);
-            if (trainer is null) return false;
+            if (trainer is null) return Result.NotFound("Trainer Not Found");
 
             var hasFutureSessions = await _unitOfWork.GetRepository<Session>().AnyAsync(S => S.TrainerId == trainerId && S.StartDate > DateTime.Now, ct);
-            if (hasFutureSessions) return false;
+            if (hasFutureSessions) return Result.Conflict("Trainer Cannot Be Deleted");
 
             _unitOfWork.GetRepository<Trainer>().Delete(trainer);
             var count = await _unitOfWork.SaveChangesAsync();
-            return count > 0;
+            return count > 0 ? Result.Ok() : Result.Conflict("Failed to Delete Trainer");
         }
+
     }
 }
