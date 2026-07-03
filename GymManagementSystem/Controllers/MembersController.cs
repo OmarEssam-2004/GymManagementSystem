@@ -1,18 +1,37 @@
-﻿using GymManagementSystem.BLL.Services.Interfaces;
+﻿using GymManagementSystem.BLL.Services.Attachment;
+using GymManagementSystem.BLL.Services.Interfaces;
 using GymManagementSystem.BLL.ViewModels.Members;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
 
 namespace GymManagementSystem.PL.Controllers
 {
+    [Authorize(Roles = "SuperAdmin")]
     public class MembersController : Controller
     {
 
         private readonly IMemberService _memberService;
-        public MembersController(IMemberService memberService)
+        private readonly IAttachmentService _attachmentService;
+
+        public MembersController(
+            IMemberService memberService,
+            IAttachmentService attachmentService
+            )
         {
             _memberService = memberService;
+            _attachmentService = attachmentService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Picture(int id, CancellationToken ct = default)
+        {
+            var member = await _memberService.GetMemberDetailsAsync(id, ct);
+            if (member is null || string.IsNullOrWhiteSpace(member.Photo)) return NotFound();
+            var result = _attachmentService.GetFile("MemberPicture", member.Photo);
+            if(result is null) return NotFound();
+            return File(result.Value.stream,result.Value.contentType);
         }
 
         public async Task<IActionResult> Index(CancellationToken ct)
@@ -21,7 +40,6 @@ namespace GymManagementSystem.PL.Controllers
 
             return View(members);
         }
-
 
         [HttpGet]
         public IActionResult Create()
@@ -52,7 +70,6 @@ namespace GymManagementSystem.PL.Controllers
 
         }
 
-
         [HttpGet]
         public async Task<IActionResult> MemberDetails(int id, CancellationToken ct)
         {
@@ -68,7 +85,6 @@ namespace GymManagementSystem.PL.Controllers
 
         }
 
-
         [HttpGet]
         public async Task<IActionResult> HealthRecordDetails(int id, CancellationToken ct)
         {
@@ -80,8 +96,6 @@ namespace GymManagementSystem.PL.Controllers
             }
             return View(result); 
         }
-
-
 
         [HttpGet]
         public async Task<IActionResult> EditMember(int id, CancellationToken ct)
@@ -119,7 +133,6 @@ namespace GymManagementSystem.PL.Controllers
             return View(model);
 
         }
-
 
         [HttpGet]
         public async Task<IActionResult> DeleteAsync(int id, CancellationToken ct)

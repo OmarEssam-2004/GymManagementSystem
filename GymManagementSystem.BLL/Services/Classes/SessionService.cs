@@ -136,7 +136,6 @@ namespace GymManagementSystem.BLL.Services.Classes
             return count > 0 ? Result.Ok() : Result.Conflict("Failed to update session");
 
         }
-
         public async Task<Result> DeleteSessionAsync(int SessionId, CancellationToken ct = default)
         {
             var session = await _unitOfWork.GetRepository<Session>().GetByIdAsync(SessionId, ct);

@@ -1,12 +1,14 @@
 ﻿using GymManagementSystem.DAL.Models;
 using GymManagementSystem.DAL.Repositories.Interfaces;
 using GymManagementSystem.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
+
 namespace GymManagementSystem.DbContexts
 {
-    public class GymDbContext : DbContext
+    public class GymDbContext : IdentityDbContext<ApplicationUser>
     {
         public GymDbContext(DbContextOptions<GymDbContext>  Options) : base(Options)
         {
@@ -18,11 +20,6 @@ namespace GymManagementSystem.DbContexts
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
             base.OnModelCreating(modelBuilder);
         }
-
-        //internal IGenericRepository<BaseEntity> SaveChangesAsync(object ct)
-        //{
-        //    throw new NotImplementedException();
-        //}
 
         public DbSet<Plan> Plans { get; set; }
         public DbSet<Booking> Bookings { get; set; }

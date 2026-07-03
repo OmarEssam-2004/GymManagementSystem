@@ -1,6 +1,7 @@
 ﻿
 using AutoMapper;
 using GymManagementSystem.BLL.Coomon;
+using GymManagementSystem.BLL.Services.Attachment;
 using GymManagementSystem.BLL.Services.Interfaces;
 using GymManagementSystem.BLL.ViewModels.Members;
 using GymManagementSystem.DAL;
@@ -12,16 +13,19 @@ namespace GymManagement.BLL.Services.Classes
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly IAttachmentService _attachmentService;
+
         public MemberService(
 
             IUnitOfWork unitOfWork,
-            IMapper mapper
-
-            )
+            IMapper mapper,
+            IAttachmentService attachmentService
+        )
 
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _attachmentService = attachmentService;
 
         }
 
@@ -38,11 +42,21 @@ namespace GymManagement.BLL.Services.Classes
 
             if (emailExists || phoneExists) return Result.ValidationFailed("Email or Phone Already Exists");
 
-           var member = _mapper.Map<Member>(model);
+            var photoFileName = await _attachmentService.UploadAsync(model.PhotoFile.OpenReadStream(), "MemberPicture", model.PhotoFile.FileName, ct);
+            if (string.IsNullOrWhiteSpace(photoFileName)) return Result.ValidationFailed("Photo upload failed");
 
-             _unitOfWork.GetRepository<Member>().Add(member);
+            var member = _mapper.Map<Member>(model);
+
+            member.Photo = photoFileName;
+            _unitOfWork.GetRepository<Member>().Add(member);
             var count = await _unitOfWork.SaveChangesAsync(ct);
-            return count > 0 ? Result.Ok() : Result.Conflict("Failed to Create Member");
+            if (count > 0) return Result.Ok();
+            else
+            {
+                _attachmentService.Delete(photoFileName, "MemberPicture");
+                return Result.ValidationFailed("Failed to Create Member");
+            }
+
         }
 
         public async Task<Result> DeleteMemberAsync(int memberId, CancellationToken ct)
@@ -56,6 +70,7 @@ namespace GymManagement.BLL.Services.Classes
             _unitOfWork.GetRepository<Member>().Delete(member);
             var count = await _unitOfWork.SaveChangesAsync(ct);
             return count > 0 ? Result.Ok() : Result.Conflict("Failed to Delete Member");
+
         }
 
         public async Task<IEnumerable<MemberViewModel>> GetAllMembersAsync(CancellationToken ct)

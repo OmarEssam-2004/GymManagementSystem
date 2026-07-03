@@ -9,10 +9,9 @@
         <header class="mb-4">
             <h3 class="text-primary-color">Add Member</h3>
         </header>
-        <form method="post">
 
-
-
+        <form method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div> 
             <!-- Step navigation -->
             <ul class="nav nav-tabs mb-4" id="addMemberTabs" role="tablist">
                 <li class="nav-item" role="presentation">
@@ -46,21 +45,34 @@
                             <input asp-for="Name" class="form-control" />
                             <span asp-validation-for="Name" class="text-danger"></span>
                         </div>
+
+                        <div>
+                            <div>
+                                <img id="photoPreview" alt="Photo Preview" src="#" class="img-thumbnail" style="display:none; max-width: 200px; margin-bottom: 10px;" />
+                            </div>
+                            <label asp-for="PhotoFile" class="form-label"></label>
+                            <input asp-for="PhotoFile" class="form-control" id="photoInput"/>
+                            <span asp-validation-for="PhotoFile" class="text-danger"></span>
+                        </div>
+
                         <div class="col-12 col-md-6">
                             <label asp-for="Email" class="form-label"></label>
                             <input asp-for="Email" class="form-control" />
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
+
                         <div class="col-12 col-md-6">
                             <label asp-for="Phone" class="form-label"></label>
                             <input asp-for="Phone" class="form-control" />
                             <span asp-validation-for="Phone" class="text-danger"></span>
                         </div>
+
                         <div class="col-12 col-md-6">
                             <label asp-for="DateOfBirth" class="form-label"></label>
                             <input asp-for="DateOfBirth" class="form-control" type="date" />
                             <span asp-validation-for="DateOfBirth" class="text-danger"></span>
                         </div>
+
                         <div class="col-12 col-md-6">
                             <label asp-for="Gender" class="form-label"></label>
                             <select asp-for="Gender" class="form-select" asp-items="Html.GetEnumSelectList<Gender>()">
@@ -89,6 +101,7 @@
                             <input asp-for="Street" class="form-control" />
                             <span asp-validation-for="Street" class="text-danger"></span>
                         </div>
+
                         <div class="col-12 col-md-6">
                             <label asp-for="City" class="form-label"></label>
                             <input asp-for="City" class="form-control" />
@@ -157,9 +170,6 @@
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
 }
-
-
-
 
 <script>
     // Preview photo before upload
